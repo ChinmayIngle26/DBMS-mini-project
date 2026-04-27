@@ -13,21 +13,18 @@ INSERT INTO Books (title, author, genre, total_copies, available_copies) VALUES
 ('Brief Answers to the Big Questions', 'Stephen Hawking', 'Science', 2, 2),
 ('Atomic Habits', 'James Clear', 'Self-help', 10, 10);
 
--- Note: We will use the stored procedure or insert statements to issue books, 
--- which will naturally test the Trigger!
-
--- Issuing books directly (trg_update_copies will fire)
+-- Issuing books directly (trg_issue_book_update_copies will fire)
 INSERT INTO Issued_Books (member_id, book_id, issue_date, due_date) VALUES
-(1, 1, CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE - INTERVAL '6 days'), -- Overdue
-(2, 2, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '9 days'),
-(3, 5, CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE + INTERVAL '12 days'),
-(1, 4, CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE - INTERVAL '1 day'); -- Overdue
+(1, 1, date('now', '-20 days'), date('now', '-6 days')), -- issue_id 1 (Overdue)
+(2, 2, date('now', '-5 days'), date('now', '+9 days')),  -- issue_id 2
+(3, 5, date('now', '-2 days'), date('now', '+12 days')), -- issue_id 3
+(1, 4, date('now', '-15 days'), date('now', '-1 day'));  -- issue_id 4 (Overdue)
 
 -- Returning a book manually to test trigger
-UPDATE Issued_Books SET return_date = CURRENT_DATE WHERE issue_id = 2;
+UPDATE Issued_Books SET return_date = date('now') WHERE issue_id = 2;
 
--- Generating Fines for the overdue books (Issue 1 and 4)
--- We will use the calculate_fine function we created
+-- Generating Fines for the overdue books (Issue 1 and 4) manually for dummy data
+-- In SQLite we calculate the fine amount statically for dummy data
 INSERT INTO Fines (issue_id, amount) VALUES
-(1, calculate_fine(1)),
-(4, calculate_fine(4));
+(1, 12.00), -- 6 days overdue at ₹2/day
+(4, 2.00);  -- 1 day overdue at ₹2/day

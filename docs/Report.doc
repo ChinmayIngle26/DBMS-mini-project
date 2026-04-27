@@ -1,0 +1,54 @@
+<html><head><meta charset="utf-8"></head><body><h1>Library Management System - DBMS Mini Project Report</h1>
+<h2>1. Project Overview</h2>
+<p>The "Library Management System" (LMS) is a modernized relational database project designed to streamline the operations of a library. The goal of this mini-project is to showcase the efficient utilization of Relational Database Management Systems (RDBMS) via Data Definition Language (DDL), Data Manipulation Language (DML), standard SQL triggers, and interactive application constraints. We utilized a lightweight SQLite database to run the backend natively without heavy procedural servers. Finally, a graphical user interface (GUI) was developed using Python and Streamlit to interact dynamically with the database.</p>
+<h2>2. Database Design &amp; Schema</h2>
+<p>The database (<code>library.db</code>) is normalized and specifically crafted using 4 core tables:</p>
+<h3>2.1 Core Entities and Attributes</h3>
+<ul>
+<li><strong>Members</strong>: Tracks registered library members.</li>
+<li><code>member_id</code> (Primary Key), <code>name</code>, <code>email</code> (Unique), <code>phone</code>, <code>join_date</code></li>
+<li><strong>Books</strong>: The inventory of the library. </li>
+<li><code>book_id</code> (Primary Key), <code>title</code>, <code>author</code>, <code>genre</code>, <code>total_copies</code> (CHECK &gt;= 0), <code>available_copies</code> (CHECK &gt;= 0 AND &lt;= total_copies)</li>
+<li><strong>Issued_Books</strong>: The transactional junction tracking borrowed books.</li>
+<li><code>issue_id</code> (Primary Key), <code>member_id</code> (Foreign Key - cascade delete), <code>book_id</code> (Foreign Key - cascade delete), <code>issue_date</code>, <code>due_date</code>, <code>return_date</code>.</li>
+<li><strong>Fines</strong>: Handles penalty tracking for overdue books.</li>
+<li><code>fine_id</code> (Primary Key), <code>issue_id</code> (Foreign Key), <code>amount</code>, <code>paid_status</code> (INTEGER boolean logic 0/1).</li>
+</ul>
+<p><em>Refer to the attached <code>ER_Diagram.md</code> for the visual entity-relationship structure.</em></p>
+<h2>3. SQL Requirements and Implementation</h2>
+<h3>3.1 DDL &amp; DML</h3>
+<p>The SQL scripts enforce vital database constraints:
+- <code>PRIMARY KEY AUTOINCREMENT</code> to maintain tuple uniqueness natively.
+- <code>FOREIGN KEY</code> cascades to prevent orphaned records.
+- <code>NOT NULL</code> for crucial metadata such as <code>name</code> and <code>due_date</code>.
+- <code>CHECK</code> constraints on <code>Books</code> (e.g., <code>available_copies &lt;= total_copies</code>) and <code>Issued_Books</code> (e.g., <code>due_date &gt;= issue_date</code>).</p>
+<h3>3.2 Meaningful Queries Developed</h3>
+<p>At least 5 business-critical SQL structures are supplied dynamically:
+1. <strong>Current Issues</strong>: Finds active borrowings using <code>return_date IS NULL</code>.
+2. <strong>Overdue Books</strong>: Compares <code>date('now')</code> against <code>due_date</code> utilizing table joins.
+3. <strong>Most Borrowed Analytics</strong>: Aggregates datasets grouping transaction behavior metrics efficiently.
+4. <strong>Unpaid Fines</strong>: Filters by boolean logical flags (<code>paid_status = 0</code>).
+5. <strong>Book Availability</strong>: Implements pattern matching (<code>LIKE</code>) to search subsets.</p>
+<h2>4. Triggers and Application Logic</h2>
+<p>The implementation leverages standard SQL functionality embedded natively inside the fast SQLite engine alongside python logic.</p>
+<ol>
+<li><strong>Trigger Engine (<code>trg_issue_book_update_copies</code>)</strong>: 
+   An automated database trigger attached to the <code>Issued_Books</code> table on <code>INSERT</code> and <code>UPDATE</code>. When a book is issued, it dynamically decrements the <code>available_copies</code>. When a book is returned (i.e., <code>return_date</code> flips from <code>NULL</code>), it inherently increments the <code>available_copies</code>.</li>
+<li><strong>Application Constraints (Transaction Safe)</strong>:
+   Encapsulates the transactional logic safely inside Python <code>app.py</code>. It explicitly checks the <code>available_copies</code> logic securely inside standard queries, raising an algorithmic exception if stock is depleted, preventing standard triggers from failing negative checks. </li>
+<li><strong>Native Analytics Arithmetic</strong>:
+   Determines dynamic system properties directly computing intervals using <code>date('now', '+14 days')</code> during execution runs.</li>
+</ol>
+<h2>5. Frontend UI</h2>
+<p>A minimalistic UI was architected utilizing <strong>Python</strong> combined with <strong>Streamlit</strong> and heavily reliant on the <code>sqlite3</code> library to facilitate DB integration smoothly.
+- The user can view global library catalogs and search gracefully.
+- The interaction interface executes direct transactional payloads across protected UI endpoints.
+- Error handling catches database exceptions dynamically and relays them securely to the frontend, preventing system outages.</p>
+<h3>Tech Stack Utilized</h3>
+<ul>
+<li><strong>Engine</strong>: SQLite 3 (Lightweight RDBMS Engine)</li>
+<li><strong>Frontend</strong>: Python 3 / Streamlit</li>
+<li><strong>Communication Protocol</strong>: <code>sqlite3</code> interface, <code>pandas</code> standardizing datasets.</li>
+</ul>
+<h2>6. Conclusion</h2>
+<p>The LMS effectively simulates enterprise software by bridging normalized relational mappings with strict constraint enforcement and programmatic logic loops embedded in web routes securely avoiding procedural PL/pgSQL network bottlenecks locally!</p></body></html>

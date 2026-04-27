@@ -34,7 +34,7 @@ erDiagram
         int fine_id PK
         int issue_id FK
         numeric amount
-        boolean paid_status
+        int paid_status
     }
     
     MEMBERS ||--o{ ISSUED_BOOKS : "has"

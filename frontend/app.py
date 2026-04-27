@@ -1,12 +1,11 @@
 import streamlit as st
-import psycopg2
+import sqlite3
 import pandas as pd
 
 # Database Connection Helper
 @st.cache_resource
 def get_db_connection():
-    # Will try to connect with default user and localhost
-    return psycopg2.connect(dbname="library_db")
+    return sqlite3.connect("library.db", check_same_thread=False)
 
 # Setup page configuration
 st.set_page_config(
@@ -50,7 +49,7 @@ st.markdown("""
 
 # Helper function for getting temporary connections for transactions
 def get_trx_connection():
-    return psycopg2.connect(dbname="library_db")
+    return sqlite3.connect("library.db", check_same_thread=False)
 
 st.title("📚 Library Management Architecture")
 st.markdown("A Modern Relational Database System")
@@ -66,7 +65,7 @@ with st.sidebar:
     )
     st.markdown("---")
     st.caption("DBMS Mini Project")
-    st.caption("PostgreSQL Backend Engine")
+    st.caption("SQLite Backend Engine")
 
 # ----------------- PAGE HANDLERS ----------------- #
 
@@ -77,13 +76,13 @@ if page == "📊 Dashboard":
         
         # Gathering metrics
         books_df = pd.read_sql_query("SELECT SUM(total_copies) as total, SUM(available_copies) as avail FROM Books", conn)
-        active_issues_df = pd.read_sql_query("SELECT COUNT(*) FROM Issued_Books WHERE return_date IS NULL", conn)
-        unpaid_fines_df = pd.read_sql_query("SELECT SUM(amount) FROM Fines WHERE paid_status = FALSE", conn)
+        active_issues_df = pd.read_sql_query("SELECT COUNT(*) as active_count FROM Issued_Books WHERE return_date IS NULL", conn)
+        unpaid_fines_df = pd.read_sql_query("SELECT SUM(amount) as fine_sum FROM Fines WHERE paid_status = 0", conn)
         
         total_books = books_df.iloc[0]['total'] if not books_df.empty and pd.notna(books_df.iloc[0]['total']) else 0
         available_books = books_df.iloc[0]['avail'] if not books_df.empty and pd.notna(books_df.iloc[0]['avail']) else 0
-        active_issues = active_issues_df.iloc[0]['count'] if not active_issues_df.empty else 0
-        total_fines = unpaid_fines_df.iloc[0]['sum'] if not unpaid_fines_df.empty and pd.notna(unpaid_fines_df.iloc[0]['sum']) else 0
+        active_issues = active_issues_df.iloc[0]['active_count'] if not active_issues_df.empty and pd.notna(active_issues_df.iloc[0]['active_count']) else 0
+        total_fines = unpaid_fines_df.iloc[0]['fine_sum'] if not unpaid_fines_df.empty and pd.notna(unpaid_fines_df.iloc[0]['fine_sum']) else 0
         conn.close()
 
         col1, col2, col3, col4 = st.columns(4)
@@ -106,7 +105,7 @@ elif page == "🔍 Search Catalog":
         SELECT book_id as "ID", title as "Book Title", author as "Author", 
                genre as "Genre", total_copies as "Total", available_copies as "Available"
         FROM Books
-        WHERE title ILIKE %s OR author ILIKE %s
+        WHERE title LIKE ? OR author LIKE ?
         ORDER BY book_id
         """
         df = pd.read_sql_query(query, conn, params=(f"%{search_term}%", f"%{search_term}%"))
@@ -136,8 +135,13 @@ elif page == "🔄 Issue & Return":
                 conn = get_trx_connection()
                 cur = conn.cursor()
                 try:
-                    # Procedure call handles availability check and date assignment
-                    cur.execute("CALL procedure_issue_book(%s, %s)", (member_id_issue, book_id_issue))
+                    # Manual availability check and issuance for SQLite without procedures
+                    cur.execute("SELECT available_copies FROM Books WHERE book_id = ?", (book_id_issue,))
+                    res = cur.fetchone()
+                    if not res or res[0] <= 0:
+                        raise Exception("Book is currently out of stock or does not exist")
+                    
+                    cur.execute("INSERT INTO Issued_Books (member_id, book_id, due_date) VALUES (?, ?, date('now', '+14 days'))", (member_id_issue, book_id_issue))
                     conn.commit()
                     st.success("✅ Book successfully checked out! Trigger automatically decreased stock.")
                     st.balloons()
@@ -158,7 +162,7 @@ elif page == "🔄 Issue & Return":
                 conn = get_trx_connection()
                 cur = conn.cursor()
                 try:
-                    cur.execute("UPDATE Issued_Books SET return_date = CURRENT_DATE WHERE issue_id = %s", (issue_id_return,))
+                    cur.execute("UPDATE Issued_Books SET return_date = date('now') WHERE issue_id = ?", (issue_id_return,))
                     if cur.rowcount > 0:
                         conn.commit()
                         st.success("✅ Return accepted! Trigger automatically replenished stock.")
@@ -182,10 +186,10 @@ elif page == "👤 User History":
             query = """
             SELECT ib.issue_id as "Issue ID", b.title as "Book", b.author as "Author", 
                    ib.issue_date as "Borrowed On", ib.due_date as "Due By", 
-                   COALESCE(ib.return_date::text, 'ACTIVE') as "Returned On"
+                   COALESCE(ib.return_date, 'ACTIVE') as "Returned On"
             FROM Issued_Books ib
             JOIN Books b ON ib.book_id = b.book_id
-            WHERE ib.member_id = %s
+            WHERE ib.member_id = ?
             ORDER BY ib.issue_date DESC
             """
             df = pd.read_sql_query(query, conn, params=(member_id,))
@@ -210,7 +214,7 @@ elif page == "💰 Fines & Payments":
         JOIN Issued_Books ib ON f.issue_id = ib.issue_id
         JOIN Members m ON ib.member_id = m.member_id
         JOIN Books b ON ib.book_id = b.book_id
-        WHERE f.paid_status = FALSE
+        WHERE f.paid_status = 0
         """
         df = pd.read_sql_query(query, conn)
         
@@ -229,7 +233,7 @@ elif page == "💰 Fines & Payments":
                 if clear_submit:
                     cur = conn.cursor()
                     try:
-                        cur.execute("UPDATE Fines SET paid_status = TRUE WHERE fine_id = %s", (fine_id_pay,))
+                        cur.execute("UPDATE Fines SET paid_status = 1 WHERE fine_id = ?", (fine_id_pay,))
                         if cur.rowcount > 0:
                             conn.commit()
                             st.success("Payment Received and cleared! 💸")

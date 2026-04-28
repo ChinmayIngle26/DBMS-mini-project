@@ -1,7 +1,32 @@
 <html><head><meta charset="utf-8"></head><body><h1>Library Management System - DBMS Mini Project Report</h1>
+<h2>Problem Statement</h2>
+<p>Traditional library systems often struggle with inefficient tracking of physical inventory, manual penalty calculations for overdue items, and a lack of real-time consistency between book availability and active checkouts. The objective of this project is to architect a reliable, digital Library Management System (LMS) capable of autonomously managing circulation, enforcing strict data constraints, and ensuring transaction safety through an automated database backend.</p>
 <h2>1. Project Overview</h2>
 <p>The "Library Management System" (LMS) is a modernized relational database project designed to streamline the operations of a library. The goal of this mini-project is to showcase the efficient utilization of Relational Database Management Systems (RDBMS) via Data Definition Language (DDL), Data Manipulation Language (DML), standard SQL triggers, and interactive application constraints. We utilized a lightweight SQLite database to run the backend natively without heavy procedural servers. Finally, a graphical user interface (GUI) was developed using Python and Streamlit to interact dynamically with the database.</p>
-<h2>2. Database Design &amp; Schema</h2>
+<h2>2. Project Architecture</h2>
+<p>The architecture of the Library Management System is built upon a 2-tier internal model encapsulating the user interaction and localized database processing securely within the workspace:</p>
+<ul>
+<li><strong>Frontend/Presentation</strong>: The graphical user interface (GUI) is generated dynamically via <strong>Streamlit</strong>. It processes user interaction payloads and provides comprehensive data visualization tables and active metrics.</li>
+<li><strong>Application Logic</strong>: The middleware layer, driven by <strong>Python</strong>, handles the communication bridge. It validates stock constraints dynamically avoiding hard database faults, and constructs prepared SQL statements mapping python data structures into relational paradigms using Pandas.</li>
+<li><strong>Database Backend</strong>: Grounded around a locally managed <strong>SQLite</strong> state file (<code>library.db</code>). The RDBMS ensures robust ACID compliance natively, maintaining referential integrity across the graph and deploying pure SQL standard Triggers to execute automatic adjustments independently. </li>
+</ul>
+<h2>3. Project Structure</h2>
+<p>The repository is segmented into independent environments isolating database mapping, analytical logic, and presentation workflows:</p>
+<p><code>text
+DBMS-mini-project/
+├── db_scripts/
+│   ├── schema.sql         # Base database schema, constraints, and Triggers
+│   ├── dummy_data.sql     # Data payloads to test functionality visually
+│   └── queries.sql        # Analytics query extracts
+├── docs/
+│   ├── ER_Diagram.md      # Visual entity relational map
+│   └── Report.md          # Project analysis
+├── frontend/
+│   ├── app.py             # Streamlit graphical UI &amp; middleware logic
+│   └── requirements.txt   # Interface dependency manifest
+├── init_db.py             # Python script initializing the `.db` ecosystem
+└── README.md              # Setup instructions</code></p>
+<h2>4. Database Design &amp; Schema</h2>
 <p>The database (<code>library.db</code>) is normalized and specifically crafted using 4 core tables:</p>
 <h3>2.1 Core Entities and Attributes</h3>
 <ul>
@@ -15,7 +40,7 @@
 <li><code>fine_id</code> (Primary Key), <code>issue_id</code> (Foreign Key), <code>amount</code>, <code>paid_status</code> (INTEGER boolean logic 0/1).</li>
 </ul>
 <p><em>Refer to the attached <code>ER_Diagram.md</code> for the visual entity-relationship structure.</em></p>
-<h2>3. SQL Requirements and Implementation</h2>
+<h2>5. SQL Requirements and Implementation</h2>
 <h3>3.1 DDL &amp; DML</h3>
 <p>The SQL scripts enforce vital database constraints:
 - <code>PRIMARY KEY AUTOINCREMENT</code> to maintain tuple uniqueness natively.
@@ -29,7 +54,7 @@
 3. <strong>Most Borrowed Analytics</strong>: Aggregates datasets grouping transaction behavior metrics efficiently.
 4. <strong>Unpaid Fines</strong>: Filters by boolean logical flags (<code>paid_status = 0</code>).
 5. <strong>Book Availability</strong>: Implements pattern matching (<code>LIKE</code>) to search subsets.</p>
-<h2>4. Triggers and Application Logic</h2>
+<h2>6. Triggers and Application Logic</h2>
 <p>The implementation leverages standard SQL functionality embedded natively inside the fast SQLite engine alongside python logic.</p>
 <ol>
 <li><strong>Trigger Engine (<code>trg_issue_book_update_copies</code>)</strong>: 
@@ -39,7 +64,7 @@
 <li><strong>Native Analytics Arithmetic</strong>:
    Determines dynamic system properties directly computing intervals using <code>date('now', '+14 days')</code> during execution runs.</li>
 </ol>
-<h2>5. Frontend UI</h2>
+<h2>7. Frontend UI</h2>
 <p>A minimalistic UI was architected utilizing <strong>Python</strong> combined with <strong>Streamlit</strong> and heavily reliant on the <code>sqlite3</code> library to facilitate DB integration smoothly.
 - The user can view global library catalogs and search gracefully.
 - The interaction interface executes direct transactional payloads across protected UI endpoints.
@@ -50,5 +75,5 @@
 <li><strong>Frontend</strong>: Python 3 / Streamlit</li>
 <li><strong>Communication Protocol</strong>: <code>sqlite3</code> interface, <code>pandas</code> standardizing datasets.</li>
 </ul>
-<h2>6. Conclusion</h2>
+<h2>8. Conclusion</h2>
 <p>The LMS effectively simulates enterprise software by bridging normalized relational mappings with strict constraint enforcement and programmatic logic loops embedded in web routes securely avoiding procedural PL/pgSQL network bottlenecks locally!</p></body></html>
